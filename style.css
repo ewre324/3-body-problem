@@ -1,0 +1,73 @@
+body {
+    margin: 0;
+    overflow: hidden;
+    background-color: #000;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: white;
+}
+
+canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+}
+
+.ui-overlay {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(30, 30, 30, 0.8);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #444;
+    backdrop-filter: blur(5px);
+    pointer-events: auto; /* Ensures UI is clickable */
+    user-select: none;
+}
+
+h1 {
+    margin: 0 0 15px 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: #eee;
+}
+
+.controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+select, button {
+    padding: 8px 12px;
+    background: #333;
+    color: white;
+    border: 1px solid #555;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+select:hover, button:hover {
+    background: #444;
+    border-color: #777;
+}
+
+button {
+    background: #007acc;
+    border: none;
+    font-weight: bold;
+}
+
+button:hover {
+    background: #005fa3;
+}
+
+.hint {
+    margin-top: 10px;
+    font-size: 0.8rem;
+    color: #aaa;
+    font-style: italic;
+}
