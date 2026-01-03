@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Three-Body Problem</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="ui-overlay">
+        <h1>Three-Body Simulation</h1>
+        <div class="controls">
+            <select id="scenarioSelect" onchange="changeScenario()">
+                <option value="figure8">Stable Figure-8</option>
+                <option value="starSystem">Star System</option>
+                <option value="chaos">Random Chaos</option>
+            </select>
+            <button onclick="resetSim()">Reset</button>
+            <div class="hint">Tip: Click & Drag bodies to throw them!</div>
+        </div>
+    </div>
+    <canvas id="simCanvas"></canvas>
+    <script src="script.js"></script>
+</body>
+</html>
