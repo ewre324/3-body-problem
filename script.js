@@ -26,6 +26,7 @@ let bodies = [];
 let animationId;
 let draggedBody = null;
 let dragOffset = { x: 0, y: 0 };
+let dragHistory = [];
 let paused = false;
 let drawTrails = true;
 let timeScale = 1;
@@ -102,8 +103,12 @@ function calculateForces(dt) {
             const dx = bodies[j].x - bodies[i].x;
             const dy = bodies[j].y - bodies[i].y;
             const distSq = dx * dx + dy * dy;
-            const dist = Math.sqrt(distSq) + 1e-6;
-            const f = (G * bodies[i].mass * bodies[j].mass) / (distSq + SOFTENING);
+
+            // Corrected softening logic
+            const softenedDistSq = distSq + SOFTENING;
+            const dist = Math.sqrt(softenedDistSq);
+            const f = (G * bodies[i].mass * bodies[j].mass) / softenedDistSq;
+
             fx += f * (dx / dist);
             fy += f * (dy / dist);
         }
@@ -113,8 +118,8 @@ function calculateForces(dt) {
     }
 }
 
-function physicsStep(multiplier = 1) {
-    const dt = (0.5 * timeScale * multiplier) / PHYSICS_SUBSTEPS;
+function physicsStep(totalDt) {
+    const dt = totalDt / PHYSICS_SUBSTEPS;
     for (let s = 0; s < PHYSICS_SUBSTEPS; s++) {
         calculateForces(dt);
         for (const body of bodies) body.update(dt);
@@ -180,8 +185,11 @@ function centerSystem() {
 function initScenario(type) {
     bodies = [];
     const select = document.getElementById('scenarioSelect');
-    if (type) select.value = type;
-    else type = select.value;
+    if (type) {
+        select.value = type;
+    } else {
+        type = select.value;
+    }
 
     if (type === 'figure8') {
         const scalePos = 150;
@@ -202,21 +210,21 @@ function initScenario(type) {
         bodies.push(new Body(cx - 400, cy - 100, 1.0, -0.5, 20, '#ffffff'));
     } else {
         for (let i = 0; i < 4; i++) {
-            addRandomBody();
+            addRandomBody(false);
         }
     }
 
     updateStats();
 }
 
-function addRandomBody() {
+function addRandomBody(shouldUpdate = true) {
     const m = Math.random() * 90 + 30;
     const x = cx + (Math.random() - 0.5) * 420;
     const y = cy + (Math.random() - 0.5) * 320;
     const vx = (Math.random() - 0.5) * 2.6;
     const vy = (Math.random() - 0.5) * 2.6;
     bodies.push(new Body(x, y, vx, vy, m, randomColor()));
-    updateStats();
+    if (shouldUpdate) updateStats();
 }
 
 function getMousePos(e) {
@@ -235,6 +243,7 @@ canvas.addEventListener('mousedown', (e) => {
             body.vy = 0;
             dragOffset.x = body.x - m.x;
             dragOffset.y = body.y - m.y;
+            dragHistory = [];
             break;
         }
     }
@@ -246,14 +255,35 @@ canvas.addEventListener('mousemove', (e) => {
     const newX = m.x + dragOffset.x;
     const newY = m.y + dragOffset.y;
 
-    draggedBody.vx = (newX - draggedBody.x) * 0.5;
-    draggedBody.vy = (newY - draggedBody.y) * 0.5;
     draggedBody.x = newX;
     draggedBody.y = newY;
+
+    // Record history for throwing
+    const now = performance.now();
+    dragHistory.push({ x: newX, y: newY, t: now });
+    // Keep last 150ms
+    while (dragHistory.length > 0 && now - dragHistory[0].t > 150) {
+        dragHistory.shift();
+    }
 });
 
 window.addEventListener('mouseup', () => {
+    if (draggedBody && dragHistory.length >= 2) {
+        const first = dragHistory[0];
+        const last = dragHistory[dragHistory.length - 1];
+        const dtReal = (last.t - first.t) / 1000;
+
+        if (dtReal > 0.02) {
+            // Adjust velocity to simulation speed units
+            // Simulation time = real time * SIM_SPEED
+            // Velocity = dx / dt_sim = dx / (dt_real * SIM_SPEED)
+            const SIM_SPEED = 30;
+            draggedBody.vx = (last.x - first.x) / (dtReal * SIM_SPEED);
+            draggedBody.vy = (last.y - first.y) / (dtReal * SIM_SPEED);
+        }
+    }
     draggedBody = null;
+    dragHistory = [];
 });
 
 function updateStats() {
@@ -267,14 +297,20 @@ function updateStats() {
 }
 
 function animate(now = performance.now()) {
-    fps = 1000 / Math.max(16, now - previousTimestamp);
+    const frameDtMs = now - previousTimestamp;
+    fps = 1000 / (frameDtMs || 16);
     previousTimestamp = now;
 
     ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
     ctx.fillRect(0, 0, width, height);
 
     if (!paused) {
-        physicsStep();
+        // Base speed: 30 simulation units per real second
+        const SIM_SPEED = 30;
+        let dt = frameDtMs / 1000;
+        dt = Math.min(dt, 0.1); // Clamp dt to max 100ms to avoid explosion
+
+        physicsStep(dt * SIM_SPEED * timeScale);
     }
 
     for (const body of bodies) body.draw();
@@ -291,7 +327,8 @@ window.togglePause = () => {
 };
 window.stepFrame = () => {
     if (!paused) paused = true;
-    physicsStep();
+    // Step by a fixed amount (equivalent to 1/60th of a second at 1x speed)
+    physicsStep(0.5);
     updateStats();
 };
 window.setTimeScale = (value) => {
