@@ -9,16 +9,51 @@
 <body>
     <div class="ui-overlay">
         <h1>Three-Body Simulation</h1>
+
         <div class="controls">
-            <select id="scenarioSelect" onchange="changeScenario()">
-                <option value="figure8">Stable Figure-8</option>
-                <option value="starSystem">Star System</option>
-                <option value="chaos">Random Chaos</option>
-            </select>
-            <button onclick="resetSim()">Reset</button>
-            <div class="hint">Tip: Click & Drag bodies to throw them!</div>
+            <label>
+                Scenario
+                <select id="scenarioSelect" onchange="changeScenario()">
+                    <option value="figure8">Stable Figure-8</option>
+                    <option value="starSystem">Star System</option>
+                    <option value="chaos">Random Chaos</option>
+                </select>
+            </label>
+
+            <div class="button-row">
+                <button onclick="togglePause()" id="pauseBtn">Pause</button>
+                <button onclick="stepFrame()">Step</button>
+                <button onclick="resetSim()">Reset</button>
+            </div>
+
+            <div class="button-row">
+                <button onclick="addRandomBody()">Add Body</button>
+                <button onclick="clearTrails()">Clear Trails</button>
+                <button onclick="centerSystem()">Center COM</button>
+            </div>
+
+            <label>
+                Physics Speed <span id="speedLabel">1.00x</span>
+                <input type="range" id="speedRange" min="0.2" max="3" step="0.1" value="1" oninput="setTimeScale(this.value)">
+            </label>
+
+            <label class="toggle-row">
+                <input type="checkbox" id="trailToggle" checked onchange="toggleTrails(this.checked)">
+                Show Trails
+            </label>
+
+            <div class="hint">Tip: Click & drag bodies to throw them.</div>
+        </div>
+
+        <div class="stats" id="statsPanel">
+            <div><strong>Status:</strong> <span id="statusText">Running</span></div>
+            <div><strong>Bodies:</strong> <span id="bodyCount">0</span></div>
+            <div><strong>Energy:</strong> <span id="energyValue">0</span></div>
+            <div><strong>Momentum:</strong> <span id="momentumValue">0</span></div>
+            <div><strong>FPS:</strong> <span id="fpsValue">0</span></div>
         </div>
     </div>
+
     <canvas id="simCanvas"></canvas>
     <script src="script.js"></script>
 </body>
