@@ -16,20 +16,21 @@ canvas {
     position: absolute;
     top: 20px;
     left: 20px;
-    background: rgba(30, 30, 30, 0.8);
-    padding: 20px;
+    max-width: min(420px, calc(100vw - 40px));
+    background: rgba(30, 30, 30, 0.82);
+    padding: 16px;
     border-radius: 12px;
     border: 1px solid #444;
     backdrop-filter: blur(5px);
-    pointer-events: auto; /* Ensures UI is clickable */
+    pointer-events: auto;
     user-select: none;
 }
 
 h1 {
-    margin: 0 0 15px 0;
+    margin: 0 0 12px 0;
     font-size: 1.2rem;
     font-weight: 600;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
     color: #eee;
 }
 
@@ -39,35 +40,71 @@ h1 {
     gap: 10px;
 }
 
-select, button {
-    padding: 8px 12px;
+label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: #c9d0d8;
+}
+
+select,
+button,
+input[type="range"] {
+    padding: 8px 10px;
     background: #333;
     color: white;
     border: 1px solid #555;
     border-radius: 4px;
     font-size: 0.9rem;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-select:hover, button:hover {
-    background: #444;
-    border-color: #777;
 }
 
 button {
     background: #007acc;
     border: none;
-    font-weight: bold;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
 }
 
 button:hover {
     background: #005fa3;
 }
 
-.hint {
-    margin-top: 10px;
+.button-row {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+}
+
+.toggle-row {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+}
+
+.toggle-row input {
+    margin: 0;
+}
+
+.stats {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #3f3f3f;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 12px;
     font-size: 0.8rem;
-    color: #aaa;
+    color: #cbd3dd;
+}
+
+.stats strong {
+    color: #e8eef6;
+}
+
+.hint {
+    margin-top: 4px;
+    font-size: 0.8rem;
+    color: #9caac2;
     font-style: italic;
 }
