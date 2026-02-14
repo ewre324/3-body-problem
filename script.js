@@ -33,7 +33,7 @@ let timeScale = 1;
 let trailLength = DEFAULT_TRAIL_LENGTH;
 let previousTimestamp = performance.now();
 let fps = 0;
-let viewMode = '2d'; // '2d' or '3d'
+let viewMode = '3d'; // '2d' or '3d'
 let camera = {
     x: 0,
     y: 0,
@@ -43,6 +43,8 @@ let camera = {
     distance: 1000,
     zoom: 1
 };
+
+let collisions = []; // Store collision events for rendering
 
 class Body {
     constructor(x, y, vx, vy, mass, color, z = 0, vz = 0) {
@@ -231,7 +233,34 @@ function physicsStep(totalDt) {
         for (const body of bodies) body.update(dt);
     }
 
+    detectCollisions();
+
     for (const body of bodies) body.recordHistory();
+}
+
+function detectCollisions() {
+    collisions = [];
+    for (let i = 0; i < bodies.length; i++) {
+        for (let j = i + 1; j < bodies.length; j++) {
+            const b1 = bodies[i];
+            const b2 = bodies[j];
+            const dx = b2.x - b1.x;
+            const dy = b2.y - b1.y;
+            const dz = b2.z - b1.z;
+            const distSq = dx*dx + dy*dy + dz*dz;
+            const minDist = b1.radius + b2.radius;
+
+            if (distSq < minDist * minDist) {
+                // Collision detected
+                collisions.push({
+                    x: (b1.x + b2.x) / 2,
+                    y: (b1.y + b2.y) / 2,
+                    z: (b1.z + b2.z) / 2,
+                    intensity: Math.sqrt(distSq) / minDist // normalized "closeness"
+                });
+            }
+        }
+    }
 }
 
 function totalEnergy() {
@@ -466,6 +495,40 @@ function updateStats() {
     document.getElementById('pauseBtn').textContent = paused ? 'Resume' : 'Pause';
 }
 
+function drawCollisionEffect(p) {
+    if (p.scale <= 0) return;
+    const size = 20 * p.scale;
+
+    ctx.save();
+    ctx.translate(p.x, p.y);
+
+    // Glow
+    const grad = ctx.createRadialGradient(0, 0, size * 0.2, 0, 0, size);
+    grad.addColorStop(0, 'rgba(255, 255, 200, 1)');
+    grad.addColorStop(0.4, 'rgba(255, 200, 50, 0.8)');
+    grad.addColorStop(1, 'rgba(255, 100, 0, 0)');
+
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(0, 0, size, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Star burst
+    ctx.beginPath();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2 * p.scale;
+    const spikes = 8;
+    for (let i = 0; i < spikes; i++) {
+        const angle = (Math.PI * 2 * i) / spikes;
+        const len = size * 1.2;
+        ctx.moveTo(0, 0);
+        ctx.lineTo(Math.cos(angle) * len, Math.sin(angle) * len);
+    }
+    ctx.stroke();
+
+    ctx.restore();
+}
+
 function animate(now = performance.now()) {
     const frameDtMs = now - previousTimestamp;
     fps = 1000 / (frameDtMs || 16);
@@ -485,6 +548,11 @@ function animate(now = performance.now()) {
 
     if (viewMode === '2d') {
         for (const body of bodies) body.draw();
+
+        // Draw 2D collisions
+        for (const c of collisions) {
+            drawCollisionEffect({ x: c.x, y: c.y, scale: 1 });
+        }
     } else {
         // 3D Draw
         // 1. Project all bodies
@@ -506,6 +574,14 @@ function animate(now = performance.now()) {
         for (const item of projectedBodies) {
             if (item.p.scale > 0) {
                 item.body.draw3D(item.p);
+            }
+        }
+
+        // Draw 3D collisions (on top, or sorted? On top is probably fine for flashes)
+        for (const c of collisions) {
+            const p = project(c.x, c.y, c.z);
+            if (p.scale > 0) {
+                drawCollisionEffect(p);
             }
         }
     }
@@ -537,6 +613,9 @@ window.toggleTrails = (enabled) => {
     drawTrails = enabled;
     if (!enabled) clearTrails();
 };
+
+// Initial setup
+toggleViewMode();
 
 initScenario('figure8');
 animate();
