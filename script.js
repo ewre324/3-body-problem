@@ -100,14 +100,14 @@ class Body {
     draw3D(projected) {
         // Projected contains {x, y, scale}
         const r = this.radius * projected.scale;
-
+        
         // Simple trail in 3D (projected)
         if (drawTrails && this.history.length > 1) {
             ctx.beginPath();
             ctx.strokeStyle = this.color;
             ctx.lineWidth = 1.8 * projected.scale;
             ctx.globalAlpha = 0.45;
-
+            
             // We need to project history points. This is expensive, so maybe skip or simplify.
             // For now, let's just not draw trails in 3D or draw them simply.
             // Let's try projecting the last few points.
@@ -115,11 +115,11 @@ class Body {
             // Iterate backwards
             const historyLimit = 20; // limit trail complexity in 3D
             const step = Math.ceil(this.history.length / historyLimit) || 1;
-
+            
             for (let i = 0; i < this.history.length; i+=step) {
                 const p = project(this.history[i].x, this.history[i].y, this.history[i].z);
                 if (p.scale <= 0) continue; // Behind camera
-
+                
                 if (!started) {
                     ctx.moveTo(p.x, p.y);
                     started = true;
@@ -129,7 +129,7 @@ class Body {
             }
             // Connect to current pos
             ctx.lineTo(projected.x, projected.y);
-
+            
             ctx.stroke();
             ctx.globalAlpha = 1;
         }
@@ -137,7 +137,7 @@ class Body {
         ctx.beginPath();
         ctx.arc(projected.x, projected.y, Math.max(0.5, r), 0, Math.PI * 2);
         ctx.fillStyle = this.color;
-
+        
         // Fake lighting/shading
         const grad = ctx.createRadialGradient(
             projected.x - r*0.3, projected.y - r*0.3, r * 0.2,
@@ -146,7 +146,7 @@ class Body {
         grad.addColorStop(0, '#fff');
         grad.addColorStop(1, this.color);
         ctx.fillStyle = grad;
-
+        
         ctx.fill();
         ctx.closePath();
     }
@@ -177,7 +177,7 @@ function project(x, y, z) {
     // Let's assume camera is at [0, 0, camera.distance] relative to rotated world
     const dist = camera.distance;
     const scale = dist / (dist - z2);
-
+    
     // If behind camera
     if (dist - z2 <= 0) return { x: 0, y: 0, scale: -1, z: z2 };
 
@@ -209,7 +209,7 @@ function calculateForces(dt) {
             const dy = bodies[j].y - bodies[i].y;
             const dz = bodies[j].z - bodies[i].z;
             const distSq = dx * dx + dy * dy + dz * dz;
-
+            
             // Corrected softening logic
             const softenedDistSq = distSq + SOFTENING;
             const dist = Math.sqrt(softenedDistSq);
@@ -232,7 +232,7 @@ function physicsStep(totalDt) {
         calculateForces(dt);
         for (const body of bodies) body.update(dt);
     }
-
+    
     detectCollisions();
 
     for (const body of bodies) body.recordHistory();
@@ -249,7 +249,7 @@ function detectCollisions() {
             const dz = b2.z - b1.z;
             const distSq = dx*dx + dy*dy + dz*dz;
             const minDist = b1.radius + b2.radius;
-
+            
             if (distSq < minDist * minDist) {
                 // Collision detected
                 collisions.push({
@@ -361,7 +361,7 @@ function addRandomBody(shouldUpdate = true) {
     const x = cx + (Math.random() - 0.5) * 420;
     const y = cy + (Math.random() - 0.5) * 320;
     let z = 0;
-
+    
     const vx = (Math.random() - 0.5) * 2.6;
     const vy = (Math.random() - 0.5) * 2.6;
     let vz = 0;
@@ -408,7 +408,7 @@ canvas.addEventListener('mousedown', (e) => {
 
 canvas.addEventListener('mousemove', (e) => {
     const m = getMousePos(e);
-
+    
     if (viewMode === '2d') {
         if (!draggedBody) return;
         const newX = m.x + dragOffset.x;
@@ -429,13 +429,13 @@ canvas.addEventListener('mousemove', (e) => {
         if (isDraggingCamera) {
             const dx = m.x - lastMousePos.x;
             const dy = m.y - lastMousePos.y;
-
+            
             camera.angleY += dx * 0.01;
             camera.angleX += dy * 0.01;
-
+            
             // Clamp X angle to avoid flipping
             camera.angleX = Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, camera.angleX));
-
+            
             lastMousePos = m;
         }
     }
@@ -474,7 +474,7 @@ canvas.addEventListener('wheel', (e) => {
 window.toggleViewMode = () => {
     const select = document.getElementById('viewModeSelect');
     viewMode = select.value;
-
+    
     const hint = document.getElementById('interactionHint');
     if (viewMode === '3d') {
         hint.textContent = 'Tip: Drag to rotate camera. Scroll to zoom.';
@@ -498,21 +498,21 @@ function updateStats() {
 function drawCollisionEffect(p) {
     if (p.scale <= 0) return;
     const size = 20 * p.scale;
-
+    
     ctx.save();
     ctx.translate(p.x, p.y);
-
+    
     // Glow
     const grad = ctx.createRadialGradient(0, 0, size * 0.2, 0, 0, size);
     grad.addColorStop(0, 'rgba(255, 255, 200, 1)');
     grad.addColorStop(0.4, 'rgba(255, 200, 50, 0.8)');
     grad.addColorStop(1, 'rgba(255, 100, 0, 0)');
-
+    
     ctx.fillStyle = grad;
     ctx.beginPath();
     ctx.arc(0, 0, size, 0, Math.PI * 2);
     ctx.fill();
-
+    
     // Star burst
     ctx.beginPath();
     ctx.strokeStyle = '#fff';
@@ -548,7 +548,7 @@ function animate(now = performance.now()) {
 
     if (viewMode === '2d') {
         for (const body of bodies) body.draw();
-
+        
         // Draw 2D collisions
         for (const c of collisions) {
             drawCollisionEffect({ x: c.x, y: c.y, scale: 1 });
@@ -562,8 +562,8 @@ function animate(now = performance.now()) {
         });
 
         // 2. Sort by Z depth (furthest first)
-        // z2 is the transformed Z. Larger Z is closer to camera in our logic?
-        // Wait, z2 = z1 * cosX + ...
+        // z2 is the transformed Z. Larger Z is closer to camera in our logic? 
+        // Wait, z2 = z1 * cosX + ... 
         // scale = dist / (dist - z2).
         // If z2 is positive and large, it approaches dist.
         // So larger z2 is closer to camera.
