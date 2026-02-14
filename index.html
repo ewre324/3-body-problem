@@ -12,6 +12,14 @@
 
         <div class="controls">
             <label>
+                View Mode
+                <select id="viewModeSelect" onchange="toggleViewMode()">
+                    <option value="2d">2D Flat View</option>
+                    <option value="3d">3D Perspective</option>
+                </select>
+            </label>
+
+            <label>
                 Scenario
                 <select id="scenarioSelect" onchange="changeScenario()">
                     <option value="figure8">Stable Figure-8</option>
@@ -42,7 +50,7 @@
                 Show Trails
             </label>
 
-            <div class="hint">Tip: Click & drag bodies to throw them.</div>
+            <div class="hint" id="interactionHint">Tip: Click & drag bodies to throw them.</div>
         </div>
 
         <div class="stats" id="statsPanel">
